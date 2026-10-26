@@ -7,52 +7,58 @@ namespace Shared.GameData.Units;
 public static class UnitsLibrary
 {
     
-    private static readonly FrozenDictionary<UnitTypes, UnitData> _unitsLibrary = FrozenDictionary<UnitTypes, UnitData>.Empty;
+    private static readonly UnitData[] _units;
+    public static ushort Count {get; private set;}
 
     static UnitsLibrary()
     {
         
-        _unitsLibrary = ParseHeroesFromJson().ToFrozenDictionary();
+        _units = ParseHeroesFromJson();
 
     }
 
-    private static Dictionary<UnitTypes, UnitData> ParseHeroesFromJson()
+    private static UnitData[] ParseHeroesFromJson()
     {
         
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
 
-        while(dir != null && !Directory.Exists(Path.Combine(dir.FullName, "Shared")))
+        while(dir != null && !Directory.Exists(Path.Combine(dir.FullName, "gamedata")))
         {
             dir = dir.Parent;
         }
-        if (dir == null) throw new DirectoryNotFoundException("Shared folder not found!");
+        if (dir == null) throw new DirectoryNotFoundException("gamedata folder not found. Check the path.");
+        var heroesDir = Path.Combine(dir.FullName, "gamedata", "heroes");
 
-        var heroesDir = Path.Combine(dir.FullName, "Shared", "editor", "heroes");
-
-        var dictionary = new Dictionary<UnitTypes, UnitData>();
         var heroesArray = Directory.GetFiles(heroesDir, "*.json");
-
         if(heroesArray.Length == 0) throw new Exception("Folder is empty.");
+
+        var originArray = new UnitData[heroesArray.Length];
 
         for(int i = 0; i < heroesArray.Length; i++)
         {
             
             string filePath = heroesArray[i];
 
-            var fileName = Path.GetFileNameWithoutExtension(filePath);
-            UnitTypes unitType = Enum.Parse<UnitTypes>(fileName);
-
             var json = File.ReadAllText(filePath);
             UnitData data = JsonSerializer.Deserialize<UnitData>(json);
             
-            dictionary.Add(unitType, data);
+            originArray[data.FrameworkId] = data;
+            Count++;
 
         }
         
-        return dictionary;
+        return originArray;
 
     }
 
-    public static bool TryGetUnit(UnitTypes unitId, out UnitData data) => _unitsLibrary.TryGetValue(unitId, out data);
+    public static bool TryGetUnit(ushort unitId, out UnitData data)
+    {
+        data = default;
+        if(unitId > Count || unitId > ushort.MaxValue) return false;
+
+        data = _units[unitId];
+        return true;
+
+    }
 
 }
