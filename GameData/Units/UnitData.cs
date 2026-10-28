@@ -5,7 +5,7 @@ namespace Shared.GameData.Units;
 
 public struct UnitData
 {
-    
+
     public required ushort FrameworkId {get; init;}
     public required float Radius {get; init;}
     public required string Name {get; init;}

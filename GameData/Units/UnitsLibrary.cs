@@ -6,20 +6,20 @@ namespace Shared.GameData.Units;
 
 public static class UnitsLibrary
 {
-    
-    private static readonly UnitData[] _units;
+
+    private static readonly FrozenDictionary<ushort, UnitData> _unitsFrozen = FrozenDictionary<ushort, UnitData>.Empty;
     public static ushort Count {get; private set;}
 
     static UnitsLibrary()
     {
-        
-        _units = ParseHeroesFromJson();
+
+        _unitsFrozen = ParseHeroesFromJson().ToFrozenDictionary();
 
     }
 
-    private static UnitData[] ParseHeroesFromJson()
+    private static Dictionary<ushort, UnitData> ParseHeroesFromJson()
     {
-        
+
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
 
         while(dir != null && !Directory.Exists(Path.Combine(dir.FullName, "gamedata")))
@@ -32,33 +32,25 @@ public static class UnitsLibrary
         var heroesArray = Directory.GetFiles(heroesDir, "*.json");
         if(heroesArray.Length == 0) throw new Exception("Folder is empty.");
 
-        var originArray = new UnitData[heroesArray.Length];
+        var originDictionary = new Dictionary<ushort, UnitData>();
 
-        for(int i = 0; i < heroesArray.Length; i++)
+        for (int i = 0; i < heroesArray.Length; i++)
         {
-            
+
             string filePath = heroesArray[i];
 
             var json = File.ReadAllText(filePath);
             UnitData data = JsonSerializer.Deserialize<UnitData>(json);
-            
-            originArray[data.FrameworkId] = data;
+
+            originDictionary[data.FrameworkId] = data;
             Count++;
 
         }
-        
-        return originArray;
+
+        return originDictionary;
 
     }
 
-    public static bool TryGetUnit(ushort unitId, out UnitData data)
-    {
-        data = default;
-        if(unitId > Count || unitId > ushort.MaxValue) return false;
-
-        data = _units[unitId];
-        return true;
-
-    }
+    public static bool TryGetUnit(ushort unitId, out UnitData data) => _unitsFrozen.TryGetValue(unitId, out data);
 
 }
