@@ -8,7 +8,7 @@ public static class UnitsLibrary
 {
 
     private static readonly FrozenDictionary<ushort, UnitData> _unitsFrozen = FrozenDictionary<ushort, UnitData>.Empty;
-    public static ushort Count {get; private set;}
+    public static ushort Count => (ushort)_unitsFrozen.Count;
 
     static UnitsLibrary()
     {
@@ -43,7 +43,6 @@ public static class UnitsLibrary
             UnitData data = JsonSerializer.Deserialize<UnitData>(json);
 
             originDictionary[data.FrameworkId] = data;
-            Count++;
 
         }
 
