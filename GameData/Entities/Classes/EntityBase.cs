@@ -14,14 +14,16 @@ public abstract class EntityBase : IDamagable
     protected Vector3 _spawnPosition;
     public byte Rotation {get; protected set;}
     public bool IsDead {get; protected set;} = false;
+    public MatchTeam EntityTeam {get; private set;}
 
-    public EntityBase(ushort entityId, Vector3 spawnPos, byte rotation = 0)
+    public EntityBase(ushort entityId, Vector3 spawnPos, MatchTeam team, byte rotation = 0)
     {
         
         EntityId = entityId;
         Position = spawnPos;
         Rotation = rotation;
         _spawnPosition = spawnPos;
+        EntityTeam = team;
 
     }
     

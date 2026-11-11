@@ -4,20 +4,19 @@ using System.Text.Json;
 
 namespace Shared.GameData.Units;
 
+/// <summary>
+/// Hero stats loaded from gamedata/heroes/*.json once per process.
+/// The key is the generated <see cref="HeroId" />, which is also the network id.
+/// File name must match the enum member: Lolka.json -> HeroId.Lolka.
+/// </summary>
 public static class UnitsLibrary
 {
 
-    private static readonly FrozenDictionary<ushort, UnitData> _unitsFrozen = FrozenDictionary<ushort, UnitData>.Empty;
-    public static ushort Count => (ushort)_unitsFrozen.Count;
+    private static readonly FrozenDictionary<HeroId, UnitData> _heroesFrozen = ParseHeroesFromJson().ToFrozenDictionary();
 
-    static UnitsLibrary()
-    {
+    public static ushort Count => (ushort)_heroesFrozen.Count;
 
-        _unitsFrozen = ParseHeroesFromJson().ToFrozenDictionary();
-
-    }
-
-    private static Dictionary<ushort, UnitData> ParseHeroesFromJson()
+    private static Dictionary<HeroId, UnitData> ParseHeroesFromJson()
     {
 
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
@@ -32,17 +31,24 @@ public static class UnitsLibrary
         var heroesArray = Directory.GetFiles(heroesDir, "*.json");
         if(heroesArray.Length == 0) throw new Exception("Folder is empty.");
 
-        var originDictionary = new Dictionary<ushort, UnitData>();
+        var originDictionary = new Dictionary<HeroId, UnitData>(heroesArray.Length);
 
         for (int i = 0; i < heroesArray.Length; i++)
         {
 
             string filePath = heroesArray[i];
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+
+            if(!Enum.TryParse(fileName, ignoreCase: false, out HeroId hero) || hero == HeroId.None)
+            {
+                throw new InvalidOperationException(
+                    $"gamedata/heroes/{fileName}.json has no HeroId entry. Run: dotnet run --project Tools/HeroesGen");
+            }
 
             var json = File.ReadAllText(filePath);
             UnitData data = JsonSerializer.Deserialize<UnitData>(json);
 
-            originDictionary[data.FrameworkId] = data;
+            originDictionary.Add(hero, data);
 
         }
 
@@ -50,6 +56,12 @@ public static class UnitsLibrary
 
     }
 
-    public static bool TryGetUnit(ushort unitId, out UnitData data) => _unitsFrozen.TryGetValue(unitId, out data);
+    public static bool TryGetHero(HeroId hero, out UnitData data) => _heroesFrozen.TryGetValue(hero, out data);
+
+    public static UnitData GetHero(HeroId hero)
+    {
+        if(_heroesFrozen.TryGetValue(hero, out UnitData data)) return data;
+        throw new KeyNotFoundException($"No gamedata for hero '{hero}'. Run: dotnet run --project Tools/HeroesGen");
+    }
 
 }
