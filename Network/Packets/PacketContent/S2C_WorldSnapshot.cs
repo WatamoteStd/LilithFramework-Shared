@@ -11,12 +11,6 @@ public enum EntityFlags : byte
     None = 0,
     Dead = 1
 }
-
-/// <summary>
-/// One unit in the world snapshot. 43 bytes on the wire, little-endian.
-/// Static data (hero, max hp, speed...) is sent every tick on purpose:
-/// the packet is self-contained, so a lost snapshot can never desync the client.
-/// </summary>
 public struct EntitySnapshot
 {
     public const int Size = 43;
@@ -39,12 +33,6 @@ public struct EntitySnapshot
     public float AttackRange;
 }
 
-/// <summary>
-/// S2C_WorldSnapshot: full state of every entity, 5 + 43 * N bytes.
-/// MaxEntities is limited by the MTU, not by taste:
-/// 5 + 43 * 32 = 1381 bytes, REI_PAYLOAD_MAXIMUM_SIZE is 1495.
-/// Use <see cref="Create" />: a default struct has a null Entities array.
-/// </summary>
 public struct S2C_WorldSnapshotPacket
 {
     public const int MaxEntities = 32;

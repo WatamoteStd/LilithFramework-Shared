@@ -24,6 +24,10 @@ public class UnitEntity : EntityBase
     public float MaxHealth => _maxHealth;
     public float Mana {get; set;}
     public float MaxMana {get; private set;}
+    public float Speed {get; private set;} = 5.0f;
+    public float Damage {get; private set;}
+    public float BasicAttackTime {get; private set;}
+    public float AttackRange {get; private set;}
     
     public UnitEntity(ulong playerIdentif, ushort entityId, Vector3 spawnPos, MatchTeam team, HeroId hero = HeroId.None, byte rotation = 0) 
         : base (entityId, spawnPos, team, rotation)
@@ -51,5 +55,11 @@ public class UnitEntity : EntityBase
         Console.WriteLine($"[UnitId:{EntityId} | PlayerIdentificator:{PlayerIdentificator}] Take {value} damage! Health: {_health} / {_maxHealth}");
 
     }
+
+    public override void SetMoveTarget(float x, float z)
+    {
+        
+    }
+
 
 }

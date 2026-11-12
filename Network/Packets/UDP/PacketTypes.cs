@@ -13,6 +13,8 @@ public enum PacketTypes : ushort
     C2S_LobbyJoin = 6,
     C2S_LobbyReady = 7,
     S2C_LobbyWelcome = 8,
-    S2C_LobbyState = 9
+    S2C_LobbyState = 9,
+    C2S_ChatMessage = 10,
+    S2C_ChatMessage = 11
 
 }

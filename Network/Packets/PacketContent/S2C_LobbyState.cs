@@ -5,9 +5,7 @@ using Shared.Lobby;
 
 namespace Shared.Packets.PacketContent;
 
-/// <summary>
-/// One row of the lobby roster. Nickname is raw UTF-8, 0..24 bytes.
-/// </summary>
+
 public struct LobbyPlayerState
 {
     public const int MaxSize = 4 + 1 + NicknameRules.MaxBytes + 2 + 1 + 1;

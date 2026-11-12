@@ -5,10 +5,6 @@ using Shared.GameData.Units.Property;
 
 namespace Shared.Packets.PacketContent;
 
-/// <summary>
-/// S2C_HandshakeResponse: who you are. 10 bytes.
-/// ServerTick lets the client detect a server restart (tick going backwards).
-/// </summary>
 public struct S2C_HandshakeResponsePacket
 {
     
