@@ -1,118 +1,221 @@
-
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using Shared.GameData.Units;
 using Shared.GameData.Units.Property;
+using Shared.Packets.PacketContent.WorldSnapshotTypes;
 
 namespace Shared.Packets.PacketContent;
 
+
+public enum StateType : byte
+{
+    Baseline = 0,
+    Delta = 1
+}
+
 [Flags]
 public enum EntityFlags : byte
-{
-    None = 0,
-    Dead = 1
-}
-public struct EntitySnapshot
-{
-    public const int Size = 43;
-
-    public ushort Id;
-    public HeroId Hero;
-    public MatchTeam Team;
-    public EntityFlags Flags;
-    public float X;
-    public float Z;
-    public byte Facing;
-    public ushort Health;
-    public ushort MaxHealth;
-    public ushort Mana;
-    public ushort MaxMana;
-    public float Speed;
-    public float Radius;
-    public float Damage;
-    public float AttackTime;
-    public float AttackRange;
+{    None = 0,
+    Dead = 1 << 0,
+    Stunned = 1 << 1,
+    Slowed = 1 << 2
 }
 
 public struct S2C_WorldSnapshotPacket
 {
-    public const int MaxEntities = 32;
-    public const int MaxSize = 5 + EntitySnapshot.Size * MaxEntities;
-
+    
+    public const int MAX_ENTITIES = 32;
+    public StateType Type;
     public uint Tick;
     public byte Count;
-    public EntitySnapshot[] Entities;
+
+    public SnapshotEntityBaseline[] Baselines;
+    public SnapshotEntity[] Deltas;
 
     public static S2C_WorldSnapshotPacket Create()
     {
+        
         S2C_WorldSnapshotPacket packet = default;
-        packet.Entities = new EntitySnapshot[MaxEntities];
+        packet.Baselines = new SnapshotEntityBaseline[MAX_ENTITIES];
+        packet.Deltas = new SnapshotEntity[MAX_ENTITIES];
         return packet;
+
     }
 
     public int Serialize(Span<byte> buffer)
     {
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer, Tick);
-        buffer[4] = Count;
+        
+        int offset = 0;
 
-        int offset = 5;
-        for(int i = 0; i < Count; i++)
+        buffer[offset] = (byte)Type;
+        offset++;
+
+        if(Type == StateType.Delta)
         {
-            ref EntitySnapshot e = ref Entities[i];
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer[offset..], Tick);
+            offset += 4;
+        }
 
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer[offset..], e.Id);
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer[(offset + 2)..], (ushort)e.Hero);
-            buffer[offset + 4] = (byte)e.Team;
-            buffer[offset + 5] = (byte)e.Flags;
-            BinaryPrimitives.WriteSingleLittleEndian(buffer[(offset + 6)..], e.X);
-            BinaryPrimitives.WriteSingleLittleEndian(buffer[(offset + 10)..], e.Z);
-            buffer[offset + 14] = e.Facing;
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer[(offset + 15)..], e.Health);
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer[(offset + 17)..], e.MaxHealth);
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer[(offset + 19)..], e.Mana);
-            BinaryPrimitives.WriteUInt16LittleEndian(buffer[(offset + 21)..], e.MaxMana);
-            BinaryPrimitives.WriteSingleLittleEndian(buffer[(offset + 23)..], e.Speed);
-            BinaryPrimitives.WriteSingleLittleEndian(buffer[(offset + 27)..], e.Radius);
-            BinaryPrimitives.WriteSingleLittleEndian(buffer[(offset + 31)..], e.Damage);
-            BinaryPrimitives.WriteSingleLittleEndian(buffer[(offset + 35)..], e.AttackTime);
-            BinaryPrimitives.WriteSingleLittleEndian(buffer[(offset + 39)..], e.AttackRange);
+        buffer[offset] = Count;
+        offset++;
 
-            offset += EntitySnapshot.Size;
+        if(Type == StateType.Baseline)
+        {
+            
+            for(int i = 0; i < Count; i++)
+            {
+                
+                ref var b = ref Baselines[i];
+
+                BinaryPrimitives.WriteUInt16LittleEndian(buffer[offset..], b.Id);
+                offset += 2;
+                BinaryPrimitives.WriteUInt16LittleEndian(buffer[offset..], (ushort)b.Hero);
+                offset += 2;
+                buffer[offset] = (byte)b.Team;
+                offset++;
+
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], b.MaxHealth);
+                offset += 4;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], b.MaxMana);
+                offset += 4;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], b.Speed);
+                offset += 4;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], b.Radius);
+                offset += 4;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], b.Damage);
+                offset += 4;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], b.AttackTime);
+                offset += 4;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], b.AttackRange);
+                offset += 4;
+
+            }
+
+        }
+        else
+        {
+            
+            for(int i = 0; i < Count; i++)
+            {
+                
+                ref var d = ref Deltas[i];
+
+                BinaryPrimitives.WriteUInt16LittleEndian(buffer[offset..], d.Id);
+                offset += 2;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], d.X);
+                offset += 4;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], d.Z);
+                offset += 4;
+                buffer[offset] = d.Facing;
+                offset++;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], d.Health);
+                offset += 4;
+                BinaryPrimitives.WriteSingleLittleEndian(buffer[offset..], d.Mana);
+                offset += 4;
+                buffer[offset] = (byte)d.Flags;
+                offset++;
+                buffer[offset] = (byte)d.State;
+                offset++;
+
+
+            }
+
         }
 
         return offset;
+
     }
 
     public void Deserialize(ReadOnlySpan<byte> buffer)
     {
-        Tick = BinaryPrimitives.ReadUInt32LittleEndian(buffer);
+        
+        int offset = 0;
 
-        int count = buffer[4];
-        if(count > MaxEntities) count = MaxEntities;
-        Count = (byte)count;
+        Type = (StateType)buffer[offset];
+        offset++;
 
-        int offset = 5;
-        for(int i = 0; i < count; i++)
+        if(Type == StateType.Delta)
         {
-            ref EntitySnapshot e = ref Entities[i];
-
-            e.Id = BinaryPrimitives.ReadUInt16LittleEndian(buffer[offset..]);
-            e.Hero = (HeroId)BinaryPrimitives.ReadUInt16LittleEndian(buffer[(offset + 2)..]);
-            e.Team = (MatchTeam)buffer[offset + 4];
-            e.Flags = (EntityFlags)buffer[offset + 5];
-            e.X = BinaryPrimitives.ReadSingleLittleEndian(buffer[(offset + 6)..]);
-            e.Z = BinaryPrimitives.ReadSingleLittleEndian(buffer[(offset + 10)..]);
-            e.Facing = buffer[offset + 14];
-            e.Health = BinaryPrimitives.ReadUInt16LittleEndian(buffer[(offset + 15)..]);
-            e.MaxHealth = BinaryPrimitives.ReadUInt16LittleEndian(buffer[(offset + 17)..]);
-            e.Mana = BinaryPrimitives.ReadUInt16LittleEndian(buffer[(offset + 19)..]);
-            e.MaxMana = BinaryPrimitives.ReadUInt16LittleEndian(buffer[(offset + 21)..]);
-            e.Speed = BinaryPrimitives.ReadSingleLittleEndian(buffer[(offset + 23)..]);
-            e.Radius = BinaryPrimitives.ReadSingleLittleEndian(buffer[(offset + 27)..]);
-            e.Damage = BinaryPrimitives.ReadSingleLittleEndian(buffer[(offset + 31)..]);
-            e.AttackTime = BinaryPrimitives.ReadSingleLittleEndian(buffer[(offset + 35)..]);
-            e.AttackRange = BinaryPrimitives.ReadSingleLittleEndian(buffer[(offset + 39)..]);
-
-            offset += EntitySnapshot.Size;
+            Tick = BinaryPrimitives.ReadUInt32LittleEndian(buffer[offset..]);
+            offset += 4;
         }
+
+        Count = buffer[offset];
+        if (Count > MAX_ENTITIES) Count = MAX_ENTITIES;
+        offset++;
+
+        if(Type == StateType.Baseline)
+        {
+            
+            for(int i = 0; i < Count; i++)
+            {
+                
+                ref var b = ref Baselines[i];
+
+                b.Id = BinaryPrimitives.ReadUInt16LittleEndian(buffer[offset..]);
+                offset += 2;
+
+                b.Hero = (HeroId)BinaryPrimitives.ReadUInt16LittleEndian(buffer[offset..]);
+                offset += 2;
+
+                b.Team = (MatchTeam)buffer[offset];
+                offset++;
+
+                b.MaxHealth = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+                b.MaxMana = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+                b.Speed = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+                b.Radius = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+                b.Damage = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+                b.AttackTime = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+                b.AttackRange = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+
+            }
+            
+
+        }
+        else
+        {
+            
+            for(int i = 0; i < Count; i++)
+            {
+                
+                ref var d = ref Deltas[i];
+
+                d.Id = BinaryPrimitives.ReadUInt16LittleEndian(buffer[offset..]);
+                offset += 2;
+
+                d.X = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+                d.Z = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+
+                d.Facing = buffer[offset];
+                offset++;
+
+                d.Health = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+                d.Mana = BinaryPrimitives.ReadSingleLittleEndian(buffer[offset..]);
+                offset += 4;
+
+                d.Flags = (EntityFlags)buffer[offset];
+                offset++;
+                d.State = (EntityStates)buffer[offset];
+                offset++;
+
+
+
+            }
+
+        }
+
     }
+
+    
 }

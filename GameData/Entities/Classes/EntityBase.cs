@@ -9,24 +9,12 @@ public abstract class EntityBase : IDamagable
 {
     public event Action<EntityBase>? OnDie;
 
-
-    public enum States
-    {
-        Idle = 0,
-        Move = 1,
-        Chase = 2,
-        Attack = 3,
-        Cast  = 4,
-        Stunned = 5
-    }
-
-    public States CurrentState {get; protected set;} = States.Idle;
+    public EntityStates CurrentState {get; protected set;} = EntityStates.Idle;
 
     public ushort EntityId {get; protected set;}
     public Vector3 Position {get; protected set;}
     protected Vector3 _spawnPosition;
     public byte Rotation {get; protected set;}
-    public bool IsDead {get; protected set;} = false;
     public MatchTeam EntityTeam {get; protected set;}
     public float Radius {get; protected set;}
     protected Vector3 _moveTarget {get; set;}
@@ -49,8 +37,8 @@ public abstract class EntityBase : IDamagable
     
     public virtual void Die()
     {
-        if(IsDead) return;
-        IsDead = true;
+        if(CurrentState == EntityStates.Dead) return;
+        CurrentState = EntityStates.Dead;
         OnDie?.Invoke(this);
     }
 

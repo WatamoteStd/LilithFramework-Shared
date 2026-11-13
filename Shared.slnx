@@ -1,8 +1,8 @@
 <Solution>
     <Project Path="..\GameServer\GameServer.csproj" />
     <Project Path="Shared.csproj" />
-    <Project Path="../Backend/Orchestrator/Orchestrator.csproj" />
-    <Project Path="../Client/ReiA-MobaClient.csproj">
-    <Project Path="../ReiA/ReiA.csproj" />
+    <Project Path="..\Backend\Orchestrator\Orchestrator.csproj" />
+    <Project Path="..\Client\ReiA-MobaClient.csproj" />
+    <Project Path="..\ReiA\ReiA.csproj" />
     <Project Path="..\Editor\Editor.csproj" />
 </Solution>
