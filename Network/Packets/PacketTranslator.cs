@@ -146,4 +146,18 @@ public static class PacketTranslator
         pck.Deserialize(buffer);
     }
 
+    public static int Serialize(PacketTypes type, Span<byte> buffer, ref S2C_SpawnProjectilePacket pck)
+    {
+        
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer, (ushort)type);
+        int payloadSize = pck.Serialize(buffer[2..]);
+
+        return payloadSize + 2;
+
+    }
+    public static void Read(ReadOnlySpan<byte> buffer, ref S2C_SpawnProjectilePacket pck)
+    {
+        pck.Deserialize(buffer);
+    }
+
 }

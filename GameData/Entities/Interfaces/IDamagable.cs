@@ -6,6 +6,6 @@ namespace Shared.GameData.Entities.Interfaces;
 public interface IDamagable
 {
     
-    void TakeDamage(float value, DamageTypes dmgType);
+    void TakeDamage(float value, DamageTypes dmgType, ushort attackerId);
 
 }

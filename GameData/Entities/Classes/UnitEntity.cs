@@ -23,11 +23,12 @@ public class UnitEntity : EntityBase
     }
     public float MaxHealth => _maxHealth;
     public float Mana {get; set;}
-    public float MaxMana {get; private set;}
-    public float Speed {get; private set;} = 5.0f;
-    public float Damage {get; private set;}
-    public float BasicAttackTime {get; private set;}
-    public float AttackRange {get; private set;}
+    public float MaxMana {get; protected set;}
+    public float Speed {get; protected set;} = 5.0f;
+    public float Damage {get; protected set;} = 23;
+    public float BasicAttackTime {get; protected set;} = 1.75f;
+    public float AttackRange {get; protected set;} = 2.0f;
+    public AttackTypes AttackType {get; protected set;} = AttackTypes.Melee;
     
     public UnitEntity(ulong playerIdentif, ushort entityId, Vector3 spawnPos, MatchTeam team, HeroId hero = HeroId.None, byte rotation = 0) 
         : base (entityId, spawnPos, team, rotation)
@@ -44,11 +45,16 @@ public class UnitEntity : EntityBase
             _health = _maxHealth;
             MaxMana = data.BaseMana;
             Mana = MaxMana;
+            Radius = data.Radius;
+            Damage = data.Damage;
+            AttackRange = data.AttackRange;
+            BasicAttackTime = data.BasicAttackTime;
+            AttackType = data.AttackType;
         }
 
     }
 
-    public override void TakeDamage(float value, DamageTypes dmgType)
+    public override void TakeDamage(float value, DamageTypes dmgType, ushort attackerId)
     {
         
         Health -= value;
