@@ -20,4 +20,12 @@ public enum HeroId : ushort
     Ozonid = 8,
     SkeletonKing = 9,
     Whip = 10,
+    TowerLight1 = 11,
+    TowerLight2 = 12,
+    TowerLight3 = 13,
+    TowerDark1 = 14,
+    TowerDark2 = 15,
+    TowerDark3 = 16,
+    AncientLight = 17,
+    AncientDark = 18
 }
