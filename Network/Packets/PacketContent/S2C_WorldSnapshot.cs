@@ -24,7 +24,9 @@ public enum EntityFlags : byte
 public struct S2C_WorldSnapshotPacket
 {
     
-    public const int MAX_ENTITIES = 32;
+    public const int MAX_ENTITIES = 64;   // delta entries: 8 + 64 * 21 = 1352 bytes
+    public const int MAX_BASELINE = 45;   // baseline entries: 4 + 45 * 33 = 1489 bytes
+
     public StateType Type;
     public uint Tick;
     public byte Count;

@@ -9,10 +9,20 @@ namespace Shared.GameData.Entities.Classes;
 public abstract class EntityBase : IDamagable
 {
     public event Action<EntityBase>? OnDie;
+    public event Action? OnRespawn;
+
+    /// <summary>
+    /// Fires after damage is applied: the victim, how much health it actually
+    /// lost, and who caused it. Only used for the cosmetic damage number, so
+    /// nothing listens to it on entities nobody watches.
+    /// </summary>
+    public event Action<EntityBase, float, DamageTypes, EntityBase>? OnDamagedTaked;
 
     public EntityStates CurrentState {get; protected set;} = EntityStates.Idle;
 
+
     public ushort EntityId {get; protected set;}
+    public bool NeedtsBaseline {get; set;}
     public Vector3 Position {get; protected set;}
     protected Vector3 _spawnPosition;
     public byte Rotation {get; protected set;}
@@ -20,6 +30,8 @@ public abstract class EntityBase : IDamagable
     public float Radius {get; protected set;}
     protected UnitData _dllData {get; set;}
     public HeroId Hero {get; protected set;}
+    public int Gold {get; protected set;}
+    public int GoldReward {get; protected set;}
 
     protected float _health = 200;
     protected float _maxHealth = 200;
@@ -32,6 +44,7 @@ public abstract class EntityBase : IDamagable
         }
     }
     public float MaxHealth => _maxHealth;
+    public float HealthRegen {get; protected set;}
     public float Mana {get; set;}
     public float MaxMana {get; protected set;}
     public float Speed {get; protected set;} = 5.0f;
@@ -39,6 +52,11 @@ public abstract class EntityBase : IDamagable
     public float BasicAttackTime {get; protected set;} = 1.75f;
     public float AttackRange {get; protected set;} = 2.0f;
     public AttackTypes AttackType {get; protected set;} = AttackTypes.Melee;
+    public float FieldOfView {get; protected set;} = 50f;
+
+
+    protected float _respawnTime = 3.0f;
+    protected float _curRespawnTime;
 
     public EntityBase(ushort entityId, Vector3 spawnPos, MatchTeam team, HeroId hero, byte rotation = 0)
     {
@@ -61,6 +79,9 @@ public abstract class EntityBase : IDamagable
             AttackRange = data.AttackRange;
             BasicAttackTime = data.BasicAttackTime;
             AttackType = data.AttackType;
+            Speed = data.MoveSpeed;
+            HealthRegen = data.HealthRegen;
+            GoldReward = data.GoldReward;
         }
 
     }
@@ -68,27 +89,33 @@ public abstract class EntityBase : IDamagable
     public virtual void Update(float deltaTime)
     {
         
+        Regenerate(deltaTime);
+
     }
     
-    public virtual void Die()
+    public virtual void Die(EntityBase killer)
     {
         if(CurrentState == EntityStates.Dead) return;
         CurrentState = EntityStates.Dead;
-        OnDie?.Invoke(this);
+        _curRespawnTime = _respawnTime;
+        
+        OnDie?.Invoke(killer);
     }
 
-    public virtual void TakeDamage(float value, DamageTypes dmgType, ushort attackerId)
+    public virtual void TakeDamage(float value, DamageTypes dmgType, EntityBase attacker)
     {
 
         if(CurrentState == EntityStates.Dead) return;
-        
-        Health -= value;
-        Console.WriteLine($"[UnitId:{EntityId}] Take {value} damage! Health: {_health} / {_maxHealth}");
 
-        if(Health == 0)
-        {
-            CurrentState = EntityStates.Dead;
-        }
+        // Overkill is not shown: a 92 hit on a 19 hp creep prints 19, so the
+        // numbers on screen always add up to the health bar that disappeared.
+        float applied = MathF.Min(value, _health);
+
+        Health -= value;
+
+        if(Health == 0) Die(attacker);
+
+        if(applied > 0) OnDamagedTaked?.Invoke(this, applied, dmgType, attacker);
 
     }
 
@@ -105,6 +132,27 @@ public abstract class EntityBase : IDamagable
 
         return distSquared <= rangeSqueared;
 
+    }
+
+    protected void Regenerate(float deltaTime)
+    {
+        
+        Health += HealthRegen * deltaTime;
+
+    }
+
+    public virtual void Respawn()
+    {
+        
+        CurrentState = EntityStates.Idle;
+        Health = MaxHealth;
+        Mana = MaxMana;
+        Position = _spawnPosition; 
+
+    }
+    public virtual void AddGold(int value)
+    {
+        Gold += value;
     }
 
 

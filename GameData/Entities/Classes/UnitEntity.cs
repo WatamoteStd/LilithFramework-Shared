@@ -9,14 +9,16 @@ namespace Shared.GameData.Entities;
 public class UnitEntity : EntityBase
 {
 
-    public ulong PlayerIdentificator {get; protected set;}
     protected Vector3 _moveTarget {get; set;}
+    protected float _currentAttackReload = 0.0f;
+    protected float _windUpTime = 0.25f;
+    protected float _curWindUpTime;
+    protected EntityBase? _attackTarget = null;
     
-    public UnitEntity(ulong playerIdentif, ushort entityId, Vector3 spawnPos, MatchTeam team, HeroId hero = HeroId.None, byte rotation = 0) 
+    public UnitEntity(ushort entityId, Vector3 spawnPos, MatchTeam team, HeroId hero = HeroId.None, byte rotation = 0) 
         : base (entityId, spawnPos, team, hero, rotation)
     {
         
-        PlayerIdentificator = playerIdentif;
         Hero = hero;
 
     }
@@ -25,6 +27,5 @@ public class UnitEntity : EntityBase
     {
         
     }
-
 
 }

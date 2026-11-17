@@ -18,6 +18,6 @@ public struct UnitData
     public required float BasicAttackTime {get; init;}
     public required float AttackRange {get; init;}
     public required AttackTypes AttackType {get; init;}
-
+    public int GoldReward {get; init;}
 
 }

@@ -16,6 +16,8 @@ public enum PacketTypes : ushort
     S2C_LobbyState = 9,
     C2S_ChatMessage = 10,
     S2C_ChatMessage = 11,
-    S2C_SpawnProjectile = 12
+    S2C_SpawnProjectile = 12,
+    S2C_DamageNumber = 13,
+    S2C_GoldUpdate = 14
 
 }
