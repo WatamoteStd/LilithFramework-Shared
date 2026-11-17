@@ -1,6 +1,7 @@
 
 using System.Numerics;
 using Shared.GameData.Entities.Interfaces;
+using Shared.GameData.Items;
 using Shared.GameData.Units;
 using Shared.GameData.Units.Property;
 
@@ -30,7 +31,7 @@ public abstract class EntityBase : IDamagable
     public float Radius {get; protected set;}
     protected UnitData _dllData {get; set;}
     public HeroId Hero {get; protected set;}
-    public int Gold {get; protected set;}
+    public float Gold {get; protected set;}
     public int GoldReward {get; protected set;}
 
     protected float _health = 200;
@@ -48,14 +49,15 @@ public abstract class EntityBase : IDamagable
     public float Mana {get; set;}
     public float MaxMana {get; protected set;}
     public float Speed {get; protected set;} = 5.0f;
-    public float Damage {get; protected set;} = 23;
+    public float Damage {get; protected set;} = 23f;
+    public float Armor {get; protected set;} = 1f;
     public float BasicAttackTime {get; protected set;} = 1.75f;
     public float AttackRange {get; protected set;} = 2.0f;
     public AttackTypes AttackType {get; protected set;} = AttackTypes.Melee;
     public float FieldOfView {get; protected set;} = 50f;
 
 
-    protected float _respawnTime = 3.0f;
+    protected float _respawnTime = 5.0f;
     protected float _curRespawnTime;
 
     public EntityBase(ushort entityId, Vector3 spawnPos, MatchTeam team, HeroId hero, byte rotation = 0)
@@ -70,6 +72,8 @@ public abstract class EntityBase : IDamagable
 
         if(hero != HeroId.None && UnitsLibrary.TryGetHero(hero, out UnitData data))
         {
+            _dllData = data;
+
             _maxHealth = data.BaseHealth;
             _health = _maxHealth;
             MaxMana = data.BaseMana;
@@ -82,6 +86,7 @@ public abstract class EntityBase : IDamagable
             Speed = data.MoveSpeed;
             HealthRegen = data.HealthRegen;
             GoldReward = data.GoldReward;
+            Armor = data.Armor;
         }
 
     }
@@ -150,9 +155,18 @@ public abstract class EntityBase : IDamagable
         Position = _spawnPosition; 
 
     }
-    public virtual void AddGold(int value)
+    public virtual void ChangeGold(float value, ItemStatAction action)
     {
-        Gold += value;
+        switch(action)
+        {
+            case ItemStatAction.Increase:
+                Gold += value;
+            break;
+            case ItemStatAction.Decrease:
+                Gold -= value;
+            break;  
+        }
+
     }
 
 
